@@ -3,7 +3,7 @@ import logging
 import typer
 import os
 
-from vox.commands.generate import prepare_generate_command
+from vox.commands.generate_command import prepare_generate_command
 
 if __name__ == "__main__":
 
