@@ -5,13 +5,13 @@ import frontmatter
 from markdown import markdown
 from typing import Any
 
-logger: Logger = logging.getLogger(__name__)
-
 class FrontMatterService:
     """Provides high level and abstract access to handle FrontMatter documents."""
 
-    @staticmethod
-    def load_and_render_from(path: str) -> dict[str, Any]:
+    def __init__(self):
+        self.__logger: Logger = logging.getLogger(__name__)
+
+    def load_and_render_from(self, path: str) -> dict[str, Any]:
         """
         Load properties and content from a FrontMatter document, renders the Markdown content and
         returns a dictionary with the loaded properties, the original content in the content
@@ -26,20 +26,35 @@ class FrontMatterService:
             body entry containing the FrontMatter markdown content rendered.
 
         """
-        logger.info("Loading FrontMatter document from file '%s'...", path)
+        self.__logger.info("Loading FrontMatter document from file '%s'...", path)
         document = frontmatter.load(path)
 
         result: dict[str, Any] = {}
         result = {**document.metadata}
         result["content"] = document.content
 
-        logger.info("Rendering FrontMatter document markdown content...")
-        rendered_content: str = markdown(document.content, extensions=[
-            "abbr", "attr_list", "fenced_code", "footnotes", "md_in_html", "tables",
-            "admonition", "codehilite", "legacy_attrs", "legacy_em", "meta",
-            "sane_lists", "smarty", "toc", "wikilinks"
-        ])
+        self.__logger.info("Rendering FrontMatter document markdown content...")
+        rendered_content: str = markdown(
+            document.content,
+            extensions=[
+                "abbr",
+                "attr_list",
+                "fenced_code",
+                "footnotes",
+                "md_in_html",
+                "tables",
+                "admonition",
+                "codehilite",
+                "legacy_attrs",
+                "legacy_em",
+                "meta",
+                "sane_lists",
+                "smarty",
+                "toc",
+                "wikilinks",
+            ],
+        )
         result["body"] = rendered_content
 
-        logger.debug("FrontMatter document loaded structure: %s", str(result))
+        self.__logger.debug("FrontMatter document loaded structure: %s", str(result))
         return result

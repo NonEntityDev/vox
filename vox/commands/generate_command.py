@@ -1,94 +1,119 @@
 import logging
+from pathlib import PurePosixPath
 import typer
 
 from logging import Logger
 from typing import Annotated, Any
 
-from vox.service.frontmatter_service import FrontMatterService
-from vox.service.jinja2_template_service import Jinja2TemplateService
-from vox.service.yaml_service import YAMLService
+from vox.service.context_service import ContextService
+from vox.service.file_system_service import FileSystemService
+from vox.service.http_server_service import HTTPServerService
+from vox.service.preview_service import PreviewService
+from vox.service.settings_service import SettingsService
+from vox.service.source_service import SourceService
+from vox.service.template_service import TemplateService
 
 
 def prepare_generate_command(app: typer.Typer):
+    """Prepares a typer command to execute the generate static content logic."""
 
     logger: Logger = logging.getLogger(__name__)
+    source_service: SourceService = SourceService()
+    settings_service: SettingsService = SettingsService()
+    context_service: ContextService = ContextService()
+    template_service: TemplateService = TemplateService()
+    file_system_service: FileSystemService = FileSystemService()
+    http_server_service: HTTPServerService = HTTPServerService()
+    preview_service: PreviewService = PreviewService(
+        file_system_service=file_system_service,
+        http_server_service=http_server_service,
+    )
 
     @app.command()
-    def generate(source: Annotated[str, typer.Option(help = "Path to the source FrontMatter document.")],
-                 target: Annotated[str, typer.Option(help = "Target path to the final static page.")],
-                 content_type: Annotated[str, typer.Option(help = "Optional content type being generated.")] = "",
-                 theme: Annotated[str, typer.Option(help = "Optional path to the theme folder.")] = "./theme",
-                 settings: Annotated[str, typer.Option(help = "Optional path to the settings file.")] = "./settings.yaml"):
+    def generate(
+        source: Annotated[
+            str, typer.Option(help="Path to the source FrontMatter document.")
+        ],
+        target: Annotated[
+            str, typer.Option(help="Target path to the final static page.")
+        ],
+        content_type: Annotated[
+            str, typer.Option(help="Optional content type being generated.")
+        ] = "",
+        theme: Annotated[
+            str, typer.Option(help="Optional path to the theme folder.")
+        ] = "./theme",
+        settings: Annotated[
+            str, typer.Option(help="Optional path to the settings file.")
+        ] = "./settings.yaml",
+        preview: Annotated[bool, typer.Option("--preview")] = False,
+        server_port: Annotated[int, typer.Option(help="TCP port used to provide the live editing when the --preview flag is provided")] = 8000
+    ):
         """
         Generates a static web page based by combining a FrontMatter document, a Jinja2 template
         and optionally additional parameters from a YAML settings file.
+
+        Parameters:
+            source (str):       Path to the FrontMatter document to be used to generate the target static content.
+            target (str):       Final path for the static generated content.
+            content_type (str): Optional type of the content being generated. Overrides the type propery in the FrontMatter document.
+            theme (str):        Optional path to the folder containing the theme to be used to generate the static content. Default: ./theme
+            settings (str):     Optional path to a yaml file containing additional parameters to help to generate the static content.
+                                Default: ./settings.yaml. The process will not fail if this file were not found.
+            preview (bool):     Optional flag that starts a web-server to provide the content of the root of the target folder and
+                                automatically rebuild the when either the source file or the user theme file were changed.
+                                Default: false
+            sever_port (int):   Optional argument to set the TCP port where the live preview web server will be listening to.
+                                Default: 8000
         """
         logger.info("Generating content...")
-
         logger.debug("Source file: %s", source)
         logger.debug("Target path: %s", target)
         logger.debug("Theme path: %s", theme)
         logger.debug("Content type: %s", content_type)
         logger.debug("Settings file path: %s", settings)
+        logger.debug("Preview: %s", preview)
+        logger.debug("Server port: %s", server_port)
 
-        # Loads the FrontMatter source file.
-        try:
-            source_document: dict[str, Any] = FrontMatterService.load_and_render_from(source)
+        source_content: dict[str, Any] = source_service.fetch_and_render_from(path=source)
 
-        except FileNotFoundError:
-            logger.error("The source file '%s' could not be found.", source)
-            raise typer.Exit(-1)
+        settings_content: dict[str, Any] = settings_service.fetch_from(path=settings)
 
-        except Exception as ex:
-            logger.error("It was not possible to open the source file '%s' due the following error: %s", source, str(ex), exc_info=True)
-            raise typer.Exit(-1)
+        context: dict[str, Any] = context_service.prepare_context(
+            source_content=source_content,
+            settings_content=settings_content,
+            informed_content_type=content_type,
+            target_path=target
+        )
 
-        # Validate if either source file type or content type are defined.
-        source_content_type:str | None = source_document.get("type", None)
-        override_content_type: str | None = None if not content_type else content_type
+        final_content: str = template_service.render_using_theme(
+            theme_path=theme,
+            context=context
+        )
 
-        source_content_type = override_content_type or source_content_type
-        if not source_content_type:
-            logger.error("The content type must be either defined as a parameter of the source file or defined in the command line.")
-            raise typer.Exit(-1)
+        file_system_service.write_to_file(
+            path=target,
+            content=final_content
+        )
 
-        # Try to load the settings file.
-        try:
-            settings_attributes: dict[str, Any] = YAMLService.load_from(settings)
+        logger.info("Content successfully generated on '%s'.", target)
 
-        except Exception as ex:
-            logger.error("It was not possible to load the settings file from '%s' path due the following error: %s", settings, str(ex), exc_info=True)
-            raise typer.Exit(-1)
+        # Starts the live preview mode.
+        if preview:
 
-        # Preparing context.
-        context: dict[str, Any] = {}
-        context["content"] = source_document
-        context["content"]["type"] = source_content_type
-        context["settings"] = settings_attributes
+            target_root_path: PurePosixPath = PurePosixPath(target).parent
+            logger.info("Providing live preview of directory '%s' on 'http://localhost:%s'...", str(target_root_path), server_port)
 
-        # Rendering the final content.
-        template_service: Jinja2TemplateService = Jinja2TemplateService(theme)
-        template_name: str = f"{source_content_type}.html"
-
-        try:
-            final_content: str = template_service.render_content_using_template(
-                template_name=template_name,
-                context=context
+            files_watch_list: list[str] = [source, settings, f"{theme}/{context['content']['type']}.html"]
+            preview_service.start_preview_mode(
+                watch_file_list=files_watch_list,
+                on_change=lambda: generate(
+                    source=source,
+                    target=target,
+                    settings=settings,
+                    theme=theme,
+                    preview=False
+                ),
+                content_folder=str(target_root_path),
+                tcp_port=server_port,
             )
-
-        except Exception as ex:
-            logger.error("It was not possible to render the final content using the template '%s' from theme '%s' due the following error: %s", template_name, theme, str(ex), exc_info=True)
-            raise typer.Abort(-1)
-
-        # Saving the final content to the target file.
-        try:
-            logger.info("Writting content on '%s'...", target)
-            with open(target, "w") as target_file:
-                target_file.writelines(final_content)
-                target_file.flush()
-
-        except Exception as ex:
-            logger.error("It was not possible to write the resulting content on '%s' path due the following error: %s", target, str(ex), exc_info=True)
-            raise typer.Abort(-1)
-
-        logger.info("Content successfully on '%s'.", target)

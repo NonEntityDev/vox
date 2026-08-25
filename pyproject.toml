@@ -14,7 +14,8 @@ dependencies = [
     "jinja2 (>=3.1.6,<4.0.0)",
     "markdown (>=3.10.3,<4.0.0)",
     "pyyaml (>=6.0.3,<7.0.0)",
-    "pygments (>=2.20.0,<3.0.0)"
+    "pygments (>=2.20.0,<3.0.0)",
+    "watchdog (>=6.0.0,<7.0.0)"
 ]
 
 [dependency-groups]
@@ -27,10 +28,52 @@ dev = [
     "mypy (>=2.3.0,<3.0.0)",
     "bandit (>=1.9.4,<2.0.0)",
     "poethepoet (>=0.48.0,<0.49.0)",
-    "basedpyright (>=1.39.10,<2.0.0)"
+    "basedpyright (>=1.39.10,<2.0.0)",
+    "assertpy (>=1.1,<2.0)"
 ]
 
 
 [build-system]
 requires = ["poetry-core>=2.0.0,<3.0.0"]
 build-backend = "poetry.core.masonry.api"
+
+[tool.poe.tasks.format]
+help = "Runs black to format all the code base."
+cmd = "poetry run black -t py314 vox tests"
+
+[tool.poe.tasks.type-check]
+help = "Runs mypy to perform type checking."
+cmd = "poetry run mypy vox"
+
+[tool.poe.tasks.vulnerability-check]
+help = "Runs vulnerability check using bandit."
+cmd = "poetry run bandit -r vox"
+
+[tool.poe.tasks.lint]
+help = "Runs pylint against source and tests."
+cmd = "poetry run pylint vox tests"
+
+[tool.poe.tasks.tests]
+help = "Runs all tests with coverage instrumentation."
+cmd = "poetry run coverage run -m pytest tests"
+
+[tool.poe.tasks.coverage]
+help = "Generates a coverage report based on the latest test execution statistics."
+cmd = "poetry run coverage html -d coverage/"
+
+[tool.poe.tasks.check-coverage]
+help = "Fails if test coverage is below the minimum required threshold."
+cmd = "poetry run coverage report"
+
+[tool.poe.tasks.build]
+help = "Execute all tasks to ensure the sanit and quality of the project."
+sequence = ["format", "type-check", "vulnerability-check", "lint", "tests", "coverage", "check-coverage"]
+
+[tool.coverage.run]
+source = ["vox"]
+branch = true
+omit = ["vox/__main__.py"]
+
+[tool.coverage.report]
+fail_under = 90
+show_missing = true

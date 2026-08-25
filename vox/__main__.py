@@ -11,10 +11,7 @@ if __name__ == "__main__":
     logging_level_name: str = os.environ.get("vox.logging.level", "INFO")
     logging_level = logging.getLevelNamesMapping().get(logging_level_name.upper())
 
-    logging.basicConfig(
-        level=logging_level,
-        format="%(levelname)s: %(message)s"
-    )
+    logging.basicConfig(level=logging_level, format="%(levelname)s: %(message)s")
     logger: Logger = logging.getLogger(__name__)
     logger.info("Starting vox...")
 

@@ -3,8 +3,8 @@ import logging
 import yaml
 from typing import Any
 
-
 logger: Logger = logging.getLogger(__name__)
+
 
 class YAMLService:
     """Provides high level access and abstract access to YAML content."""
