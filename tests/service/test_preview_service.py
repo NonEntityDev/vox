@@ -49,7 +49,9 @@ def test_start_preview_mode_watches_the_received_file_list(
 ):
     # Arrange
     watch_file_list = ["source.md", "settings.yaml"]
-    on_change = lambda: None
+
+    def on_change():
+        return None
 
     # Act
     preview_service.start_preview_mode(

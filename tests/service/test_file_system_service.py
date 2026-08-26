@@ -1,4 +1,3 @@
-import time
 from pathlib import Path
 from threading import Event
 
@@ -34,7 +33,9 @@ def test_write_to_file_aborts_when_the_target_folder_does_not_exist(tmp_path: Pa
 
     # Act / Assert
     with pytest.raises(typer.Abort):
-        file_system_service.write_to_file(path=str(target_path), content="<h1>Hello</h1>")
+        file_system_service.write_to_file(
+            path=str(target_path), content="<h1>Hello</h1>"
+        )
 
 
 def test_file_change_handler_invokes_on_change_for_a_file_event():

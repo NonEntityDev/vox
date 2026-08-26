@@ -38,7 +38,11 @@ def source_file(tmp_path: Path) -> Path:
 
 
 def test_generate_writes_the_rendered_content_to_the_target_path(
-    runner: CliRunner, app: typer.Typer, source_file: Path, theme_folder: Path, tmp_path: Path
+    runner: CliRunner,
+    app: typer.Typer,
+    source_file: Path,
+    theme_folder: Path,
+    tmp_path: Path,
 ):
     # Arrange
     target_path = tmp_path / "output" / "index.html"
@@ -133,7 +137,9 @@ def test_generate_with_preview_starts_the_preview_service(
     # Arrange
     preview_service_instance = MagicMock()
     preview_service_class = MagicMock(return_value=preview_service_instance)
-    monkeypatch.setattr(generate_command_module, "PreviewService", preview_service_class)
+    monkeypatch.setattr(
+        generate_command_module, "PreviewService", preview_service_class
+    )
 
     app = typer.Typer()
     prepare_generate_command(app)

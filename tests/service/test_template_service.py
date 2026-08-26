@@ -61,7 +61,9 @@ def test_render_using_theme_switches_environment_when_the_theme_path_changes(
     # Arrange
     other_theme_path = tmp_path / "other_theme"
     other_theme_path.mkdir()
-    (other_theme_path / "post.html").write_text("<article>{{ content.title }}</article>")
+    (other_theme_path / "post.html").write_text(
+        "<article>{{ content.title }}</article>"
+    )
     context = {"content": {"type": "post", "title": "Hello World"}}
 
     # Act
@@ -82,4 +84,6 @@ def test_render_using_theme_aborts_when_the_template_is_missing(
 
     # Act / Assert
     with pytest.raises(typer.Abort):
-        template_service.render_using_theme(theme_path=str(theme_folder), context=context)
+        template_service.render_using_theme(
+            theme_path=str(theme_folder), context=context
+        )

@@ -1,10 +1,12 @@
-from logging import Logger
 import logging
-from typing import Any, Callable, override
+from collections.abc import Callable
+from logging import Logger
+from typing import override
 
 import typer
 from watchdog.events import DirModifiedEvent, FileModifiedEvent, FileSystemEventHandler
 from watchdog.observers import Observer
+
 
 class FileChangeHandler(FileSystemEventHandler):
     """Handle changes in observed files."""
@@ -15,17 +17,17 @@ class FileChangeHandler(FileSystemEventHandler):
         changes in a observed file.
 
         Parameters:
-            on_chage (Callable[..., None]): Callable to be invoked when a change in an observed
-            file is detected.
+            on_chage (Callable[..., None]): Callable to be invoked when a change in an
+                observed file is detected.
         """
-        self.__logger:Logger = logging.getLogger(self.__class__.__name__)
+        self.__logger: Logger = logging.getLogger(self.__class__.__name__)
         self.__on_change = on_change
 
     @override
     def on_modified(self, event: DirModifiedEvent | FileModifiedEvent) -> None:
         """
-        Invokes the constructor received callable whenever a change is detected in one of the
-        observer files. Directories are ignored anyway.
+        Invokes the constructor received callable whenever a change is detected in one
+        of the observer files. Directories are ignored anyway.
         """
         if not event.is_directory:
             self.__logger.info("Change detected on file '%s'...", event.src_path)
@@ -35,7 +37,7 @@ class FileChangeHandler(FileSystemEventHandler):
 class FileSystemService:
     """Provides a high level and abstract API to handle file system operations."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.__logger: Logger = logging.getLogger(self.__class__.__name__)
 
     def write_to_file(self, path: str, content: str, encoding: str = "UTF-8") -> None:
@@ -54,22 +56,31 @@ class FileSystemService:
                 file_output.flush()
 
         except Exception as ex:
-            self.__logger.error("It was not possible to write the content into file '%s' due the following error: %s", path, str(ex))
+            self.__logger.error(
+                "It was not possible to write the content into file '%s' due the "
+                "following error: %s",
+                path,
+                str(ex),
+            )
             self.__logger.debug("Error details:", exc_info=True)
-            raise typer.Abort(-1)
+            raise typer.Abort(-1) from ex
 
-    def watch_for_changes_on(self, watch_list: list[str], on_change: Callable[..., None]):
+    def watch_for_changes_on(
+        self, watch_list: list[str], on_change: Callable[..., None]
+    ):
         """
-        Watch for changes in files. Whenever a change is detected, the received callable is invoked
-        to handle that.
+        Watch for changes in files. Whenever a change is detected, the received
+        callable is invoked to handle that.
 
         Parameters:
-            watch_list (list[str]): List with path of files to be watched. Directories will be ignored.
-            on_change (Callable[..., None]): Callable to be invoked whenever a changed is detected in one of the observer files.
+            watch_list (list[str]): List with path of files to be watched. Directories
+                will be ignored.
+            on_change (Callable[..., None]): Callable to be invoked whenever a changed
+                is detected in one of the observer files.
 
         Return:
-            observer: Observer configured to watch for file changes in the received list of files to observe.
-                      The returned observer is already started.
+            observer: Observer configured to watch for file changes in the received
+                list of files to observe. The returned observer is already started.
         """
         self.__logger.info("Watching for changes on '%s'...", watch_list)
         observer = Observer()
