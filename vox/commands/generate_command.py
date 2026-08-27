@@ -105,17 +105,19 @@ def prepare_generate_command(app: typer.Typer):
             theme_path=theme, context=context
         )
 
-        file_system_service.write_to_file(path=target, content=final_content)
+        file_system_service.write_to_file(
+            path=f"{target}{context['content']['relative_path']}", content=final_content
+        )
 
         logger.info("Content successfully generated on '%s'.", target)
 
         # Starts the live preview mode.
         if preview:
-            target_root_path: PurePosixPath = PurePosixPath(target).parent
             logger.info(
-                "Providing live preview of directory '%s' on 'http://localhost:%s'...",
-                str(target_root_path),
+                "Providing live preview of directory '%s' on 'http://localhost:%s%s'...",
+                target,
                 server_port,
+                context["content"]["relative_path"],
             )
 
             files_watch_list: list[str] = [
@@ -132,6 +134,6 @@ def prepare_generate_command(app: typer.Typer):
                     theme=theme,
                     preview=False,
                 ),
-                content_folder=str(target_root_path),
+                content_folder=target,
                 tcp_port=server_port,
             )

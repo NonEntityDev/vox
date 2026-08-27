@@ -26,7 +26,7 @@ def test_fetch_and_render_from_parses_metadata_and_renders_markdown(
     # Assert
     assert_that(result["title"]).is_equal_to("Hello World")
     assert_that(result["type"]).is_equal_to("post")
-    assert_that(result["content"]).contains("<h1").contains("Heading")
+    assert_that(result["body"]).contains("<h1").contains("Heading")
 
 
 def test_fetch_and_render_from_aborts_when_the_file_is_missing(

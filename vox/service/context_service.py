@@ -1,6 +1,5 @@
 import logging
 from logging import Logger
-from pathlib import PurePosixPath
 from typing import Any
 
 import typer
@@ -25,15 +24,14 @@ class ContextService:
             informed_content_type=informed_content_type, source_content=source_content
         )
 
-        relative_path, permalink_path = self.infer_content_url(
-            target_path=target_path, settings_content=settings_content
+        permalink_path: str = (
+            f"{settings_content.get('baseUrl', '')}{source_content['relative_path']}"
         )
 
         return {
             "content": {
                 **source_content,
                 "type": content_type,
-                "relative_path": relative_path,
                 "permalink_path": permalink_path,
             },
             "settings": settings_content,
@@ -57,12 +55,3 @@ class ContextService:
             raise typer.Abort(-1)
 
         return content_type
-
-    def infer_content_url(
-        self, target_path: str, settings_content: dict[str, Any]
-    ) -> tuple[str, str]:
-        self.__logger.info("Infering the content url...")
-        final_path: PurePosixPath = PurePosixPath(target_path)
-        relative_path: str = f"/{PurePosixPath(*final_path.parts[2:])!s}"
-        permalink_path: str = f"{settings_content.get('baseUrl', '')}{relative_path}"
-        return relative_path, permalink_path

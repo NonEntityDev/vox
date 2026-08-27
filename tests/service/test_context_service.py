@@ -47,42 +47,15 @@ def test_infer_content_type_aborts_when_no_content_type_is_available(context_ser
         )
 
 
-def test_infer_content_url_prefixes_the_relative_path_with_the_base_url(
-    context_service,
-):
-    # Arrange
-    target_path = "/target/blog/post.html"
-    settings_content = {"baseUrl": "https://example.com"}
-
-    # Act
-    relative_path, permalink_path = context_service.infer_content_url(
-        target_path=target_path, settings_content=settings_content
-    )
-
-    # Assert
-    assert_that(relative_path).is_equal_to("/blog/post.html")
-    assert_that(permalink_path).is_equal_to("https://example.com/blog/post.html")
-
-
-def test_infer_content_url_defaults_to_an_empty_base_url(context_service):
-    # Arrange
-    target_path = "/target/blog/post.html"
-    settings_content = {}
-
-    # Act
-    relative_path, permalink_path = context_service.infer_content_url(
-        target_path=target_path, settings_content=settings_content
-    )
-
-    # Assert
-    assert_that(permalink_path).is_equal_to(relative_path)
-
-
 def test_prepare_context_combines_source_content_type_and_url_and_settings(
     context_service,
 ):
     # Arrange
-    source_content = {"type": "post", "title": "Hello World"}
+    source_content = {
+        "type": "post",
+        "title": "Hello World",
+        "relative_path": "/blog/post.html",
+    }
     settings_content = {"baseUrl": "https://example.com"}
     target_path = "/target/blog/post.html"
 

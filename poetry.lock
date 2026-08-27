@@ -1111,6 +1111,18 @@ rich = ">=13.8.0"
 shellingham = ">=1.3.0"
 
 [[package]]
+name = "types-assertpy"
+version = "1.1.0.20260518"
+description = "Typing stubs for assertpy"
+optional = false
+python-versions = ">=3.10"
+groups = ["dev"]
+files = [
+    {file = "types_assertpy-1.1.0.20260518-py3-none-any.whl", hash = "sha256:bb079e00031a6c08e9294c176be1f32efbd6223bed71fd641132e36a94a8a350"},
+    {file = "types_assertpy-1.1.0.20260518.tar.gz", hash = "sha256:5d41746e30a31aa0c4106bffbe668497b0c64ea86faab9efe00c5e84332725bf"},
+]
+
+[[package]]
 name = "types-markdown"
 version = "3.10.2.20260712"
 description = "Typing stubs for Markdown"
@@ -1192,4 +1204,4 @@ watchmedo = ["PyYAML (>=3.10)"]
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.14"
-content-hash = "dd988c9531f3c9ed1beeec9c53a592a39a2c5f1e6b6f0d66466e5710e32cd995"
+content-hash = "035d8382684628b8e2dd74b55a73846d6b340a6c939f0e692bd3761026669955"

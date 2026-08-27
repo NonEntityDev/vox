@@ -33,7 +33,9 @@ def theme_folder(tmp_path: Path) -> Path:
 @pytest.fixture
 def source_file(tmp_path: Path) -> Path:
     source_path = tmp_path / "source.md"
-    source_path.write_text("---\ntitle: Hello World\ntype: post\n---\n# Body\n")
+    source_path.write_text(
+        "---\ntitle: Hello World\ntype: post\nrelative_path: /output/index.html\n---\n# Body\n"
+    )
     return source_path
 
 
@@ -45,8 +47,8 @@ def test_generate_writes_the_rendered_content_to_the_target_path(
     tmp_path: Path,
 ):
     # Arrange
-    target_path = tmp_path / "output" / "index.html"
-    target_path.parent.mkdir()
+    target_path = tmp_path
+    (tmp_path / "output").mkdir()
     missing_settings_path = tmp_path / "settings.yaml"
 
     # Act
@@ -66,7 +68,9 @@ def test_generate_writes_the_rendered_content_to_the_target_path(
 
     # Assert
     assert_that(result.exit_code).is_equal_to(0)
-    assert_that(target_path.read_text()).is_equal_to("<h1>Hello World</h1>")
+    assert_that((target_path / "output" / "index.html").read_text()).is_equal_to(
+        "<h1>Hello World</h1>"
+    )
 
 
 def test_generate_honors_the_content_type_override(
@@ -74,9 +78,11 @@ def test_generate_honors_the_content_type_override(
 ):
     # Arrange
     source_path = tmp_path / "source.md"
-    source_path.write_text("---\ntitle: Untyped\n---\n# Body\n")
-    target_path = tmp_path / "output" / "index.html"
-    target_path.parent.mkdir()
+    source_path.write_text(
+        "---\ntitle: Untyped\nrelative_path: /output/index.html\n---\n# Body\n"
+    )
+    target_path = tmp_path
+    (tmp_path / "output").mkdir()
 
     # Act
     result = runner.invoke(
@@ -97,7 +103,9 @@ def test_generate_honors_the_content_type_override(
 
     # Assert
     assert_that(result.exit_code).is_equal_to(0)
-    assert_that(target_path.read_text()).is_equal_to("<h1>Untyped</h1>")
+    assert_that((target_path / "output" / "index.html").read_text()).is_equal_to(
+        "<h1>Untyped</h1>"
+    )
 
 
 def test_generate_aborts_when_the_content_type_cannot_be_inferred(
@@ -144,8 +152,8 @@ def test_generate_with_preview_starts_the_preview_service(
     app = typer.Typer()
     prepare_generate_command(app)
 
-    target_path = tmp_path / "output" / "index.html"
-    target_path.parent.mkdir()
+    target_path = tmp_path
+    (target_path / "output").mkdir()
     settings_path = tmp_path / "settings.yaml"
 
     # Act
@@ -172,6 +180,6 @@ def test_generate_with_preview_starts_the_preview_service(
     assert_that(call_kwargs["watch_file_list"]).is_equal_to(
         [str(source_file), str(settings_path), f"{theme_folder}/post.html"]
     )
-    assert_that(call_kwargs["content_folder"]).is_equal_to(str(target_path.parent))
+    assert_that(call_kwargs["content_folder"]).is_equal_to(str(target_path))
     assert_that(call_kwargs["tcp_port"]).is_equal_to(9100)
     assert_that(callable(call_kwargs["on_change"])).is_true()

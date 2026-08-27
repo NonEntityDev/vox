@@ -12,10 +12,11 @@ class TemplateService:
     to render the final content.
     """
 
+    __theme_path: str = None
+    __environment: Environment = None
+
     def __init__(self) -> None:
         self.__logger: Logger = logging.getLogger(self.__class__.__name__)
-        self.__theme_path: str | None = None
-        self.__environment: Environment | None = None
 
     def render_using_theme(self, theme_path: str, context: dict[str, Any]) -> str:
         """
@@ -35,15 +36,13 @@ class TemplateService:
             "Rendering final content using theme from '%s'...", theme_path
         )
         if not self.__theme_path or self.__theme_path != theme_path:
-            self.__theme_path = theme_path
-            self.__environment = Environment(
+            self.__theme_path: str = theme_path
+            self.__environment: Environment = Environment(
                 loader=FileSystemLoader(theme_path), autoescape=select_autoescape()
             )
 
-        assert self.__environment is not None
-
+        template_name: str = f"{context['content']['type']}.html"
         try:
-            template_name: str = f"{context['content']['type']}.html"
             self.__logger.info("Applying '%s' template...", template_name)
             return self.__environment.get_template(template_name).render(**context)
 

@@ -5,6 +5,7 @@ from logging import Logger
 import typer
 
 from vox.commands.generate_command import prepare_generate_command
+from vox.commands.index_command import prepare_index_command
 
 if __name__ == "__main__":
     # Initializing the application logging.
@@ -17,5 +18,6 @@ if __name__ == "__main__":
 
     app: typer.Typer = typer.Typer()
     prepare_generate_command(app)
+    prepare_index_command(app)
 
     app()

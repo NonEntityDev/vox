@@ -80,4 +80,4 @@ class SourceService:
             self.__logger.debug("Error details:", exc_info=True)
             raise typer.Abort(-1) from ex
 
-        return {**document.metadata, "content": content}
+        return {**document.metadata, "body": content}
