@@ -34,7 +34,8 @@ def theme_folder(tmp_path: Path) -> Path:
 def source_file(tmp_path: Path) -> Path:
     source_path = tmp_path / "source.md"
     source_path.write_text(
-        "---\ntitle: Hello World\ntype: post\nrelative_path: /output/index.html\n---\n# Body\n"
+        "---\ntitle: Hello World\ntype: post\n"
+        "relative_path: /output/index.html\n---\n# Body\n"
     )
     return source_path
 

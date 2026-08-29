@@ -76,6 +76,22 @@ def test_render_using_theme_switches_environment_when_the_theme_path_changes(
     assert_that(result).is_equal_to("<article>Hello World</article>")
 
 
+def test_render_using_theme_uses_the_explicit_template_name_when_provided(
+    template_service, theme_folder: Path
+):
+    # Arrange
+    (theme_folder / "index.html").write_text("<ul>{{ items | length }}</ul>")
+    context = {"content": {"type": "post"}, "items": [1, 2, 3]}
+
+    # Act
+    result = template_service.render_using_theme(
+        theme_path=str(theme_folder), context=context, template_name="index.html"
+    )
+
+    # Assert
+    assert_that(result).is_equal_to("<ul>3</ul>")
+
+
 def test_render_using_theme_aborts_when_the_template_is_missing(
     template_service, theme_folder: Path
 ):

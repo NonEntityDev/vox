@@ -1,6 +1,5 @@
 import logging
 from logging import Logger
-from pathlib import PurePosixPath
 from typing import Annotated, Any
 
 import typer
@@ -114,7 +113,8 @@ def prepare_generate_command(app: typer.Typer):
         # Starts the live preview mode.
         if preview:
             logger.info(
-                "Providing live preview of directory '%s' on 'http://localhost:%s%s'...",
+                "Providing live preview of directory '%s' on "
+                "'http://localhost:%s%s'...",
                 target,
                 server_port,
                 context["content"]["relative_path"],

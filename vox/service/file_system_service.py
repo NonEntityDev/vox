@@ -1,5 +1,6 @@
 import logging
 from collections.abc import Callable
+from glob import glob
 from logging import Logger
 from typing import override
 
@@ -91,3 +92,39 @@ class FileSystemService:
 
         observer.start()
         return observer
+
+    def list_files_from(self, folder_path: str, pattern: str) -> list[str]:
+        """
+        Recursively list all files matching the received pattern within the received
+        folder path.
+
+        Parameters:
+            folder_path (str): Path to the folder to lookup for matching files.
+            pattern (str): Lookup pattern to match against the file name.
+
+        Return:
+            list[str]: List of files found in the received path that matches the
+                received pattern.
+        """
+        self.__logger.info(
+            "Listing content to index matching the pattern '%s' from '%s'...",
+            pattern,
+            folder_path,
+        )
+
+        try:
+            return [
+                str(file)
+                for file in glob(f"{folder_path}/**/{pattern}", recursive=True)
+            ]
+
+        except Exception as ex:
+            self.__logger.error(
+                "It was not possible to list files matching the pattern '%s' from "
+                "'%s' due the following error: %s",
+                pattern,
+                folder_path,
+                str(ex),
+            )
+            self.__logger.debug("Error details:", exc_info=True)
+            raise typer.Abort(-1) from ex
