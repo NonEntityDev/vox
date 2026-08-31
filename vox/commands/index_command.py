@@ -1,3 +1,4 @@
+import datetime
 import logging
 from logging import Logger
 from typing import Annotated, Any
@@ -60,7 +61,9 @@ def prepare_index_command(app: typer.Typer):
         template: Annotated[
             str,
             typer.Option(
-                help="Optional template name file to be used. Default: index.html"
+                help="Optional template name file to be used. The extension is also "
+                "used as the extension of the generated file(s), defaulting to "
+                "'.html' when none is given. Default: index"
             ),
         ] = "index",
         ignore_types: Annotated[
@@ -129,10 +132,18 @@ def prepare_index_command(app: typer.Typer):
 
         for page in pages:
             context: dict[str, Any] = {**page, "settings": settings_parameters}
+            if "site" not in context["settings"]:
+                context["settings"]["site"] = {}
+            context["settings"]["site"]["last_build_date"] = datetime.datetime.now(
+                datetime.timezone.utc
+            )
+
             logger.info("Context: %s", str(context))
 
             final_content: str = template_service.render_using_theme(
-                theme_path=theme, context=context, template_name=f"{template}.html"
+                theme_path=theme,
+                context=context,
+                template_name=pagination_service.template_file_name(template),
             )
             file_system_service.write_to_file(
                 path=f"{target}/{page['pagination']['current_page']}",

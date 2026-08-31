@@ -1,5 +1,6 @@
 import logging
 from logging import Logger
+from pathlib import Path
 from typing import Any
 
 import typer
@@ -44,7 +45,9 @@ class TemplateService:
         )
         environment: Environment = self.__environment_for(theme_path)
 
-        template_file_name: str = template_name or f"{context['content']['type']}.html"
+        template_file_name: str = self.resolve_template_file_name(
+            context=context, template_name=template_name
+        )
 
         try:
             self.__logger.info("Applying '%s' template...", template_file_name)
@@ -60,6 +63,35 @@ class TemplateService:
             )
             self.__logger.debug("Error details:", exc_info=True)
             raise typer.Abort(-1) from ex
+
+    def resolve_template_file_name(
+        self, context: dict[str, Any], template_name: str | None = None
+    ) -> str:
+        """
+        Resolves the theme template file to be used to render the given context.
+
+        When `template_name` is provided, it is used as-is. Otherwise the template
+        file name is inferred from the content "type", using the same extension as
+        the content's own "relative_path" target (falling back to ".html" when the
+        context carries no "relative_path"), so the by-convention template a piece
+        of content is rendered with matches the extension it is written to.
+
+        Parameters:
+            context (dict[str, Any]): Rendering context, expected to include a
+                "content" entry with a "type" and, optionally, a "relative_path".
+            template_name (str | None): Optional explicit template file name.
+                Default: None.
+
+        Return:
+            str: The template file name to look up within the theme.
+        """
+        if template_name:
+            return template_name
+
+        content: dict[str, Any] = context["content"]
+        relative_path: str = content.get("relative_path", "")
+        extension: str = Path(relative_path).suffix or ".html"
+        return f"{content['type']}{extension}"
 
     def __environment_for(self, theme_path: str) -> Environment:
         """

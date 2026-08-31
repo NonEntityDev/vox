@@ -1,5 +1,6 @@
 import logging
 from logging import Logger
+from pathlib import Path
 from typing import Any
 
 
@@ -94,7 +95,32 @@ class PaginationService:
 
     def __page_file_name(self, template_name: str, page_index: int) -> str:
         """The first page keeps the bare template name; every following page gets a
-        "_page{n}" suffix."""
+        "_page{n}" suffix. Either way, the extension is the one carried by
+        `template_name`, defaulting to ".html" when it has none."""
+        stem, extension = self.__split_template_name(template_name)
         if page_index == 0:
-            return f"{template_name}.html"
-        return f"{template_name}_page{page_index}.html"
+            return f"{stem}{extension}"
+        return f"{stem}_page{page_index}{extension}"
+
+    def template_file_name(self, template_name: str) -> str:
+        """Normalizes a template name into the actual template file name: the stem
+        and extension carried by `template_name`, defaulting to the ".html"
+        extension when it has none. This is the file the theme's template engine
+        should render, as opposed to `current_page`/`previous_page`/`next_page`,
+        which name the paginated output files.
+
+        Parameters:
+            template_name (str): Template name to be normalized, e.g. "index" or
+                "rss.xml".
+
+        Return:
+            str: The normalized template file name, e.g. "index.html" or "rss.xml".
+        """
+        stem, extension = self.__split_template_name(template_name)
+        return f"{stem}{extension}"
+
+    def __split_template_name(self, template_name: str) -> tuple[str, str]:
+        """Splits a template name into its stem and extension, defaulting the
+        extension to ".html" when the template name has none."""
+        template_path: Path = Path(template_name)
+        return template_path.stem, template_path.suffix or ".html"

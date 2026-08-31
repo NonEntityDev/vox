@@ -92,6 +92,28 @@ def test_render_using_theme_uses_the_explicit_template_name_when_provided(
     assert_that(result).is_equal_to("<ul>3</ul>")
 
 
+def test_render_using_theme_infers_the_template_extension_from_the_relative_path(
+    template_service, theme_folder: Path
+):
+    # Arrange
+    (theme_folder / "feed.xml").write_text("<rss>{{ content.title }}</rss>")
+    context = {
+        "content": {
+            "type": "feed",
+            "title": "Hello World",
+            "relative_path": "/feed.xml",
+        }
+    }
+
+    # Act
+    result = template_service.render_using_theme(
+        theme_path=str(theme_folder), context=context
+    )
+
+    # Assert
+    assert_that(result).is_equal_to("<rss>Hello World</rss>")
+
+
 def test_render_using_theme_aborts_when_the_template_is_missing(
     template_service, theme_folder: Path
 ):

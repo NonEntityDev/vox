@@ -192,6 +192,46 @@ def test_index_ignores_content_of_the_ignored_types(
     assert_that(index_content).contains("<li>A</li>").does_not_contain("<li>About</li>")
 
 
+def test_index_writes_the_output_using_the_templates_extension(
+    runner: CliRunner, app: typer.Typer, tmp_path: Path
+):
+    # Arrange
+    theme_path = tmp_path / "theme"
+    theme_path.mkdir()
+    (theme_path / "rss.xml").write_text(
+        "<rss>{% for item in items %}<item>{{ item.title }}</item>{% endfor %}</rss>"
+    )
+
+    source_folder = tmp_path / "source"
+    source_folder.mkdir()
+    _write_indexable_content(source_folder / "a.html", "A", "2026-01-01")
+
+    target_folder = tmp_path / "target"
+    target_folder.mkdir()
+
+    # Act
+    result = runner.invoke(
+        app,
+        [
+            "--source",
+            str(source_folder),
+            "--target",
+            str(target_folder),
+            "--theme",
+            str(theme_path),
+            "--template",
+            "rss.xml",
+            "--settings",
+            str(tmp_path / "settings.yaml"),
+        ],
+    )
+
+    # Assert
+    assert_that(result.exit_code).is_equal_to(0)
+    assert_that((target_folder / "rss.xml").read_text()).contains("<item>A</item>")
+    assert_that(str(target_folder / "rss.xml.html")).does_not_exist()
+
+
 def test_index_honors_the_max_pages_limit(
     runner: CliRunner, app: typer.Typer, theme_folder: Path, tmp_path: Path
 ):

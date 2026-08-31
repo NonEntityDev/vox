@@ -184,3 +184,89 @@ def test_generate_with_preview_starts_the_preview_service(
     assert_that(call_kwargs["content_folder"]).is_equal_to(str(target_path))
     assert_that(call_kwargs["tcp_port"]).is_equal_to(9100)
     assert_that(callable(call_kwargs["on_change"])).is_true()
+
+
+def test_generate_writes_content_using_the_extension_of_the_relative_path(
+    runner: CliRunner, app: typer.Typer, tmp_path: Path
+):
+    # Arrange
+    theme_path = tmp_path / "theme"
+    theme_path.mkdir()
+    (theme_path / "feed.xml").write_text("<rss>{{ content.title }}</rss>")
+
+    source_path = tmp_path / "source.md"
+    source_path.write_text(
+        "---\ntitle: Hello World\ntype: feed\nrelative_path: /feed.xml\n---\n# Body\n"
+    )
+    target_path = tmp_path
+
+    # Act
+    result = runner.invoke(
+        app,
+        [
+            "--source",
+            str(source_path),
+            "--target",
+            str(target_path),
+            "--theme",
+            str(theme_path),
+            "--settings",
+            str(tmp_path / "settings.yaml"),
+        ],
+    )
+
+    # Assert
+    assert_that(result.exit_code).is_equal_to(0)
+    assert_that((target_path / "feed.xml").read_text()).is_equal_to(
+        "<rss>Hello World</rss>"
+    )
+
+
+def test_generate_with_preview_watches_the_theme_template_matching_the_relative_path(
+    runner: CliRunner,
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+):
+    # Arrange
+    preview_service_instance = MagicMock()
+    preview_service_class = MagicMock(return_value=preview_service_instance)
+    monkeypatch.setattr(
+        generate_command_module, "PreviewService", preview_service_class
+    )
+
+    app = typer.Typer()
+    prepare_generate_command(app)
+
+    theme_path = tmp_path / "theme"
+    theme_path.mkdir()
+    (theme_path / "feed.xml").write_text("<rss>{{ content.title }}</rss>")
+
+    source_path = tmp_path / "source.md"
+    source_path.write_text(
+        "---\ntitle: Hello World\ntype: feed\nrelative_path: /feed.xml\n---\n# Body\n"
+    )
+    target_path = tmp_path
+    settings_path = tmp_path / "settings.yaml"
+
+    # Act
+    result = runner.invoke(
+        app,
+        [
+            "--source",
+            str(source_path),
+            "--target",
+            str(target_path),
+            "--theme",
+            str(theme_path),
+            "--settings",
+            str(settings_path),
+            "--preview",
+        ],
+    )
+
+    # Assert
+    assert_that(result.exit_code).is_equal_to(0)
+    call_kwargs = preview_service_instance.start_preview_mode.call_args.kwargs
+    assert_that(call_kwargs["watch_file_list"]).is_equal_to(
+        [str(source_path), str(settings_path), f"{theme_path}/feed.xml"]
+    )

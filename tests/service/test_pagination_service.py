@@ -176,6 +176,43 @@ def test_paginate_content_includes_the_page_size_and_item_totals(pagination_serv
     assert_that(pages[1]["pagination"]["total_items"]).is_equal_to(1)
 
 
+def test_paginate_content_keeps_the_extension_of_a_template_name_that_has_one(
+    pagination_service,
+):
+    # Arrange
+    content = [{"title": f"Post {index}"} for index in range(2)]
+
+    # Act
+    pages = pagination_service.paginate_content(
+        content=content,
+        page_size=1,
+        max_pages=0,
+        sort_by="title",
+        reverse=False,
+        template_name="rss.xml",
+    )
+
+    # Assert
+    assert_that(pages[0]["pagination"]["current_page"]).is_equal_to("rss.xml")
+    assert_that(pages[1]["pagination"]["current_page"]).is_equal_to("rss_page1.xml")
+
+
+def test_template_file_name_defaults_to_html_when_the_template_name_has_no_extension(
+    pagination_service,
+):
+    # Act / Assert
+    assert_that(pagination_service.template_file_name("index")).is_equal_to(
+        "index.html"
+    )
+
+
+def test_template_file_name_keeps_the_extension_of_a_template_name_that_has_one(
+    pagination_service,
+):
+    # Act / Assert
+    assert_that(pagination_service.template_file_name("rss.xml")).is_equal_to("rss.xml")
+
+
 def test_paginate_content_returns_an_empty_list_for_no_content(pagination_service):
     # Act
     pages = pagination_service.paginate_content(

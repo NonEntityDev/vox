@@ -123,7 +123,8 @@ def prepare_generate_command(app: typer.Typer):
             files_watch_list: list[str] = [
                 source,
                 settings,
-                f"{theme}/{context['content']['type']}.html",
+                f"{theme}/"
+                f"{template_service.resolve_template_file_name(context=context)}",
             ]
             preview_service.start_preview_mode(
                 watch_file_list=files_watch_list,
